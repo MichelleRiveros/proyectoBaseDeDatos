@@ -422,7 +422,7 @@ INSERT INTO contacto (id_contacto, nombre_contacto, apellido_contacto) VALUES
 -- Cliente
 
 INSERT INTO cliente (id_cliente, nombre_cliente, apellido1_cliente, apellido2_cliente, telefono, id_empleado_rep_ventas, limite_credito, id_contacto) VALUES
-(1, 'Juan', 'Pérez', 'González', '123456789', 5, 5000.00, 1),
+(1, 'Juan', 'Pérez', 'González', '123456789', 10, 5000.00, 1),
 (2, 'Maria', 'López', 'García', '987654321', 6, 8000.00, 2),
 (3, 'José',  'Martínez', 'Rodríguez', '555555555', 7, 10000.00, 3),
 (4, 'Ana',  'Gómez', 'Fernández', '444444444', 8, 12000.00, 4),
@@ -814,5 +814,522 @@ WHERE e.estado = "Completado" AND MONTH(fecha_entrega) = 1;
 13. Devuelve un listado con todos los pagos que se realizaron en el
 año 2008 mediante Paypal. Ordene el resultado de mayor a menor.
 
+```mysql
+SELECT id_transaccion
+FROM pago
+WHERE forma_pago = 'Paypal' AND YEAR(fecha_pago) = 2008
+ORDER BY total DESC;
 
++----------------+
+| id_transaccion |
++----------------+
+|              7 |
+|             11 |
++----------------+
+2 rows in set (0.02 sec)
+  ```
+
+14. Devuelve un listado con todas las formas de pago que aparecen en la
+tabla pago. Tenga en cuenta que no deben aparecer formas de pago
+repetidas.
+
+SELECT DISTINCT forma_pago
+FROM pago;
+
+```mysql
++------------------------+
+| forma_pago             |
++------------------------+
+| Efectivo               |
+| Tarjeta de crédito     |
+| Transferencia bancaria |
+| Cheque                 |
+| PayPal                 |
++------------------------+
+5 rows in set (0.02 sec)
+  ```
+
+15. Devuelve un listado con todos los productos que pertenecen a la
+gama Ornamentales y que tienen más de 100 unidades en stock. El listado
+deberá estar ordenado por su precio de venta, mostrando en primer lugar
+los de mayor precio.
+
+```mysql
+SELECT p.id_producto, p.nombre, p.precio_venta, i.cantidad_en_stock
+FROM producto p
+JOIN inventario i ON p.id_producto = i.id_producto
+JOIN gama_producto g ON p.id_gama = g.id_gama
+WHERE g.gama = 'Ornamentales' AND i.cantidad_en_stock > 100
+ORDER BY p.precio_venta DESC;
+
++-------------+---------+--------------+-------------------+
+| id_producto | nombre  | precio_venta | cantidad_en_stock |
++-------------+---------+--------------+-------------------+
+|           6 | Florero |     29.99000 |               200 |
++-------------+---------+--------------+-------------------+
+1 row in set (0.00 sec)
+  ```
+
+16. Devuelve un listado con todos los clientes que sean de la ciudad de Madrid y cuyo representante de ventas tenga el código de empleado 11 o 30.
+
+```mysql
+SELECT c.id_cliente, c.nombre_cliente, c.apellido1_cliente, ciu.nombre as ciudad
+FROM cliente AS c
+JOIN cliente_direccion AS clidi ON clidi.id_cliente = c.id_cliente
+JOIN direccion AS d ON d.id_direccion = clidi.id_direccion
+JOIN ciudad AS ciu ON ciu.id_ciudad = d.id_ciudad
+WHERE ciu.nombre = 'Madrid'
+AND c.id_empleado_rep_ventas = 11 OR  c.id_empleado_rep_ventas = 30;
+
++------------+----------------+-------------------+--------+
+| id_cliente | nombre_cliente | apellido1_cliente | ciudad |
++------------+----------------+-------------------+--------+
+|          1 | Juan           | Pérez             | Madrid |
++------------+----------------+-------------------+--------+
+1 row in set (0.00 sec)
+  ```
+
+
+**Consultas multitabla (Composición interna)**
+
+Resuelva todas las consultas utilizando la sintaxis de SQL1 y SQL2. Las consultas con sintaxis de SQL2 se deben resolver con INNER JOIN y NATURAL JOIN.
+
+1. Obtén un listado con el nombre de cada cliente y el nombre y apellido de su representante de ventas.
+
+```mysql
+- SQL1
+SELECT cliente.nombre_cliente, empleado.nombre, empleado.apellido1
+FROM cliente, empleado
+WHERE cliente.id_empleado_rep_ventas = empleado.id_empleado;
+
+- SQL2
+SELECT c.nombre_cliente, e.nombre
+FROM cliente as c
+INNER JOIN empleado as e ON e.id_empleado = c.id_empleado_rep_ventas;
+
++----------------+-----------+-----------+
+| nombre_cliente | nombre    | apellido1 |
++----------------+-----------+-----------+
+| Lucía          | John      | Doe       |
+| Daniel         | Jane      | Smith     |
+| Isabel         | Michael   | Johnson   |
+| Francisco      | Emily     | Brown     |
+| María          | Emma      | Garcia    |
+| Alberto        | Emma      | Garcia    |
+| José           | William   | Lopez     |
+| Silvia         | William   | Lopez     |
+| Ana            | Olivia    | Rodriguez |
+| Javier         | Olivia    | Rodriguez |
+| Carlos         | Noah      | Hernandez |
+| Rosa           | Noah      | Hernandez |
+| Laura          | Ava       | Gonzalez  |
+| Manuel         | Ava       | Gonzalez  |
+| Juan           | James     | Perez     |
+| Pedro          | James     | Perez     |
+| Sara           | Isabella  | Torres    |
+| Miguel         | Alexander | Rivera    |
+| Carmen         | Sophia    | Flores    |
+| Elena          | Mia       | Sanchez   |
++----------------+-----------+-----------+
+20 rows in set (0.01 sec)
+  ```
+
+2. Muestra el nombre de los clientes que hayan realizado pagos junto con el nombre de sus representantes de ventas.
+
+```mysql
+- SQL1
+SELECT c.nombre_cliente, e.nombre as nombre_empleado
+FROM cliente c, empleado e, pago p
+WHERE c.id_empleado_rep_ventas = e.id_empleado AND p.id_cliente = c.id_cliente;
+
+- SQL2
+SELECT c.nombre_cliente, e.nombre as nombre_empleado
+FROM cliente AS c
+JOIN empleado AS e ON c.id_empleado_rep_ventas = e.id_empleado
+JOIN pago AS p ON p.id_cliente = c.id_cliente;
+
++----------------+-----------------+
+| nombre_cliente | nombre_empleado |
++----------------+-----------------+
+| Lucía          | John            |
+| Daniel         | Jane            |
+| Isabel         | Michael         |
+| Francisco      | Emily           |
+| María          | Emma            |
+| Alberto        | Emma            |
+| José           | William         |
+| Silvia         | William         |
+| Ana            | Olivia          |
+| Javier         | Olivia          |
+| Carlos         | Noah            |
+| Rosa           | Noah            |
+| Laura          | Ava             |
+| Manuel         | Ava             |
+| Juan           | James           |
+| Pedro          | James           |
+| Sara           | Isabella        |
+| Miguel         | Alexander       |
+| Carmen         | Sophia          |
+| Elena          | Mia             |
++----------------+-----------------+
+20 rows in set (0.00 sec)
+  ```
+
+3. Muestra el nombre de los clientes que no hayan realizado pagos junto con
+el nombre de sus representantes de ventas.
+
+```mysql
+- SQL1
+SELECT c.nombre_cliente, e.nombre AS nombre_empleado
+FROM cliente c, empleado e
+WHERE c.id_empleado_rep_ventas = e.id_empleado
+AND c.id_cliente NOT IN (SELECT id_cliente FROM pago);
+
+
+- SQL2
+SELECT c.nombre_cliente, e.nombre
+FROM cliente AS c
+JOIN empleado AS e ON c.id_empleado_rep_ventas = e.id_empleado
+JOIN pago AS p ON p.id_cliente = c.id_cliente
+WHERE  c.id_cliente NOT IN (SELECT id_cliente FROM pago) ;
+
+Empty set (0.00 sec)
+  ```
+
+4. Devuelve el nombre de los clientes que han hecho pagos y el nombre de sus representantes junto con la ciudad de la oficina a la que pertenece el
+representante.
+
+```mysql
+- SQL1
+SELECT  c.nombre_cliente, e.nombre as nombre_empleado, ciu.nombre 
+FROM cliente AS c,  empleado AS e, oficina AS o,  oficina_direccion AS od,  direccion AS d,
+ciudad AS ciu
+WHERE c.id_empleado_rep_ventas = e.id_empleado 
+AND o.id_oficina = e.id_oficina
+AND  od.id_oficina = o.id_oficina
+AND d.id_direccion = od.id_direccion
+AND ciu.id_ciudad = d.id_ciudad
+AND c.id_cliente IN (SELECT p.id_cliente FROM pago as p);
+
+- SQL2
+SELECT c.nombre_cliente, e.nombre as nombre_empleado, ciu.nombre 
+FROM cliente AS c
+JOIN empleado AS e ON c.id_empleado_rep_ventas = e.id_empleado
+JOIN oficina AS o ON o.id_oficina = e.id_oficina
+JOIN oficina_direccion AS od ON od.id_oficina = o.id_oficina
+JOIN direccion AS d ON d.id_direccion = od.id_direccion
+JOIN ciudad AS ciu ON ciu.id_ciudad = d.id_ciudad
+WHERE  c.id_cliente IN (SELECT p.id_cliente FROM pago as p);
+
++----------------+-----------------+-----------+
+| nombre_cliente | nombre_empleado | nombre    |
++----------------+-----------------+-----------+
+| Lucía          | John            | Madrid    |
+| Daniel         | Jane            | Madrid    |
+| Isabel         | Michael         | Madrid    |
+| Francisco      | Emily           | Barcelona |
+| María          | Emma            | Barcelona |
+| Alberto        | Emma            | Barcelona |
+| José           | William         | Barcelona |
+| Silvia         | William         | Barcelona |
+| Ana            | Olivia          | Barcelona |
+| Javier         | Olivia          | Barcelona |
+| Carlos         | Noah            | París     |
+| Rosa           | Noah            | París     |
+| Laura          | Ava             | París     |
+| Manuel         | Ava             | París     |
+| Juan           | James           | París     |
+| Pedro          | James           | París     |
+| Sara           | Isabella        | Milán     |
+| Miguel         | Alexander       | Milán     |
+| Carmen         | Sophia          | Milán     |
+| Elena          | Mia             | Múnich    |
++----------------+-----------------+-----------+
+20 rows in set (0.00 sec)
+  ```
+
+5. Devuelve el nombre de los clientes que no hayan hecho pagos y el nombre
+de sus representantes junto con la ciudad de la oficina a la que pertenece el representante.
+
+```mysql
+- SQL1
+SELECT  c.nombre_cliente, e.nombre as nombre_empleado, ciu.nombre 
+FROM cliente AS c,  empleado AS e, oficina AS o,  oficina_direccion AS od,  direccion AS d,
+ciudad AS ciu
+WHERE c.id_empleado_rep_ventas = e.id_empleado 
+AND o.id_oficina = e.id_oficina
+AND  od.id_oficina = o.id_oficina
+AND d.id_direccion = od.id_direccion
+AND ciu.id_ciudad = d.id_ciudad
+AND c.id_cliente NOT IN (SELECT id_cliente FROM pago);
+
+- SQL2
+SELECT c.nombre_cliente, e.nombre as nombre_empleado, ciu.nombre 
+FROM cliente AS c
+JOIN empleado AS e ON c.id_empleado_rep_ventas = e.id_empleado
+JOIN oficina AS o ON o.id_oficina = e.id_oficina
+JOIN oficina_direccion AS od ON od.id_oficina = o.id_oficina
+JOIN direccion AS d ON d.id_direccion = od.id_direccion
+JOIN ciudad AS ciu ON ciu.id_ciudad = d.id_ciudad
+WHERE  c.id_cliente NOT IN (SELECT p.id_cliente FROM pago as p);
+
+Empty set (0.01 sec)
+  ```
+
+6. Lista la dirección de las oficinas que tengan clientes en Fuenlabrada.
+
+```mysql
+- SQL1
+SELECT DISTINCT d.linea_direccion, d.barrio, d.codigo_postal
+FROM cliente c, cliente_direccion cd, direccion d, ciudad ci
+WHERE c.id_cliente = cd.id_cliente 
+AND cd.id_direccion = d.id_direccion 
+AND d.id_ciudad = ci.id_ciudad
+AND ci.nombre = 'Fuenlabrada';
+
+- SQL2
+SELECT DISTINCT d.linea_direccion, d.barrio, d.codigo_postal
+FROM cliente c
+INNER JOIN cliente_direccion cd ON c.id_cliente = cd.id_cliente 
+INNER JOIN direccion d ON cd.id_direccion = d.id_direccion 
+INNER JOIN ciudad ci ON d.id_ciudad = ci.id_ciudad
+WHERE ci.nombre = 'Fuenlabrada';
+
+Empty set (0.00 sec)
+  ```
+
+7. Devuelve el nombre de los clientes y el nombre de sus representantes junto con la ciudad de la oficina a la que pertenece el representante.
+
+```mysql
+- SQL1
+SELECT  c.nombre_cliente, e.nombre as nombre_empleado, ciu.nombre 
+FROM cliente AS c,  empleado AS e, oficina AS o,  oficina_direccion AS od,  direccion AS d,
+ciudad AS ciu
+WHERE c.id_empleado_rep_ventas = e.id_empleado 
+AND o.id_oficina = e.id_oficina
+AND  od.id_oficina = o.id_oficina
+AND d.id_direccion = od.id_direccion
+AND ciu.id_ciudad = d.id_ciudad;
+
+- SQL2
+SELECT c.nombre_cliente, e.nombre as nombre_empleado, ciu.nombre 
+FROM cliente AS c
+JOIN empleado AS e ON c.id_empleado_rep_ventas = e.id_empleado
+JOIN oficina AS o ON o.id_oficina = e.id_oficina
+JOIN oficina_direccion AS od ON od.id_oficina = o.id_oficina
+JOIN direccion AS d ON d.id_direccion = od.id_direccion
+JOIN ciudad AS ciu ON ciu.id_ciudad = d.id_ciudad;
+
++----------------+-----------------+-----------+
+| nombre_cliente | nombre_empleado | nombre    |
++----------------+-----------------+-----------+
+| Lucía          | John            | Madrid    |
+| Daniel         | Jane            | Madrid    |
+| Isabel         | Michael         | Madrid    |
+| Francisco      | Emily           | Barcelona |
+| María          | Emma            | Barcelona |
+| Alberto        | Emma            | Barcelona |
+| José           | William         | Barcelona |
+| Silvia         | William         | Barcelona |
+| Ana            | Olivia          | Barcelona |
+| Javier         | Olivia          | Barcelona |
+| Carlos         | Noah            | París     |
+| Rosa           | Noah            | París     |
+| Laura          | Ava             | París     |
+| Manuel         | Ava             | París     |
+| Juan           | James           | París     |
+| Pedro          | James           | París     |
+| Sara           | Isabella        | Milán     |
+| Miguel         | Alexander       | Milán     |
+| Carmen         | Sophia          | Milán     |
+| Elena          | Mia             | Múnich    |
++----------------+-----------------+-----------+
+20 rows in set (0.00 sec)
+  ```
+
+8. Devuelve un listado con el nombre de los empleados junto con el nombre
+de sus jefes.
+
+```mysql
+
+- SQL1
+SELECT e1.nombre AS nombre_empleado, e2.nombre AS nombre_jefe
+FROM empleado e1, empleado e2
+WHERE e1.id_jefe = e2.id_empleado;
+
+- SQL2
+SELECT e1.nombre AS nombre_empleado, e2.nombre AS nombre_jefe
+FROM empleado e1
+INNER JOIN empleado e2 ON e1.id_jefe = e2.id_empleado;
+
++-----------------+-------------+
+| nombre_empleado | nombre_jefe |
++-----------------+-------------+
+| Jane            | John        |
+| Michael         | John        |
+| Emily           | John        |
+| David           | Emily       |
+| Emma            | Emily       |
+| William         | Emily       |
+| Olivia          | Emily       |
+| Noah            | John        |
+| Ava             | Noah        |
+| James           | Noah        |
+| Isabella        | John        |
+| Alexander       | Isabella    |
+| Sophia          | Isabella    |
+| Mia             | John        |
++-----------------+-------------+
+14 rows in set (0.01 sec)
+  ```
+
+9. Devuelve un listado que muestre el nombre de cada empleados, el nombre
+de su jefe y el nombre del jefe de sus jefe.
+
+```mysql
+- SQL1
+SELECT e1.nombre AS nombre_empleado, e2.nombre AS nombre_jefe, e3.nombre AS nombre_jefe_del_jefe
+FROM empleado e1, empleado e2, empleado e3
+WHERE e1.id_jefe = e2.id_empleado
+AND e2.id_jefe = e3.id_empleado;
+
+- SQL2
+SELECT e1.nombre AS nombre_empleado, e2.nombre AS nombre_jefe, e3.nombre AS nombre_jefe_del_jefe
+FROM empleado e1
+INNER JOIN empleado e2 ON e1.id_jefe = e2.id_empleado
+INNER JOIN empleado e3 ON e2.id_jefe = e3.id_empleado;
+
++-----------------+-------------+----------------------+
+| nombre_empleado | nombre_jefe | nombre_jefe_del_jefe |
++-----------------+-------------+----------------------+
+| David           | Emily       | John                 |
+| Emma            | Emily       | John                 |
+| William         | Emily       | John                 |
+| Olivia          | Emily       | John                 |
+| Ava             | Noah        | John                 |
+| James           | Noah        | John                 |
+| Alexander       | Isabella    | John                 |
+| Sophia          | Isabella    | John                 |
++-----------------+-------------+----------------------+
+8 rows in set (0.00 sec)
+ ```
+
+10. Devuelve el nombre de los clientes a los que no se les ha entregado a
+tiempo un pedido.
+
+ ```mysql
+- SQL1
+SELECT c.nombre_cliente
+FROM cliente c, pedido p, estado_pedido e
+WHERE p.id_cliente = c.id_cliente
+AND p.id_estado = e.id_estado
+AND e.estado = 'No entregado a tiempo';
+
+- SQL2
+SELECT  c.nombre_cliente
+FROM  cliente c
+INNER JOIN  pedido p ON p.id_cliente = c.id_cliente
+INNER JOIN estado_pedido e ON p.id_estado = e.id_estado
+WHERE e.estado = 'No entregado a tiempo';
+
++----------------+
+| nombre_cliente |
++----------------+
+| Alberto        |
++----------------+
+1 row in set (0.00 sec)
+ ```
+
+11. Devuelve un listado de las diferentes gamas de producto que ha comprado cada cliente.
+
+```mysql
+- SQL1
+SELECT c.nombre_cliente, gp.gama
+FROM cliente c, pedido p, detalle_pedido dp, producto pr, gama_producto gp
+WHERE c.id_cliente = p.id_cliente
+AND p.id_pedido = dp.id_pedido
+AND dp.id_producto = pr.id_producto
+AND pr.id_gama = gp.id_gama
+GROUP BY c.nombre_cliente, gp.gama;
+
+- SQL2
+SELECT c.nombre_cliente, gp.gama
+FROM cliente c
+INNER JOIN pedido p ON c.id_cliente = p.id_cliente
+INNER JOIN detalle_pedido dp ON p.id_pedido = dp.id_pedido
+INNER JOIN producto pr ON dp.id_producto = pr.id_producto
+INNER JOIN gama_producto gp ON pr.id_gama = gp.id_gama
+GROUP BY c.nombre_cliente, gp.gama;
+
++----------------+--------------------+
+| nombre_cliente | gama               |
++----------------+--------------------+
+| Juan           | Electrodomésticos  |
+| Pedro          | Electrodomésticos  |
+| Isabel         | Electrodomésticos  |
+| Silvia         | Electrodomésticos  |
+| María          | Muebles            |
+| Sara           | Muebles            |
+| Daniel         | Muebles            |
+| Alberto        | Muebles            |
+| José           | Electrónica        |
+| Miguel         | Electrónica        |
+| Lucía          | Electrónica        |
+| Ana            | Juguetes           |
+| Carmen         | Juguetes           |
+| Manuel         | Juguetes           |
+| Carlos         | Ropa               |
+| Elena          | Ropa               |
+| Rosa           | Ropa               |
+| Laura          | Ornamentales       |
+| Francisco      | Ornamentales       |
+| Javier         | Ornamentales       |
++----------------+--------------------+
+20 rows in set (0.01 sec)
+ ```
+
+
+**Consultas multitabla (Composición externa)**
+
+Resuelva todas las consultas utilizando las cláusulas LEFT JOIN, RIGHT JOIN, NATURAL LEFT JOIN y NATURAL RIGHT JOIN.
+
+1. Devuelve un listado que muestre solamente los clientes que no han
+realizado ningún pago.
+
+```mysql
+- LEFT JOIN
+SELECT c.nombre_cliente
+FROM cliente c
+LEFT JOIN pago p ON c.id_cliente = p.id_cliente
+WHERE p.id_cliente IS NULL;
+
+- RIGHT JOIN
+SELECT c.nombre_cliente
+FROM cliente c
+RIGHT JOIN pago p ON c.id_cliente = p.id_cliente
+WHERE c.id_cliente IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+2. Devuelve un listado que muestre solamente los clientes que no han
+realizado ningún pedido.
+
+```mysql
+- LEFT JOIN
+SELECT c.nombre_cliente
+FROM cliente c
+LEFT JOIN pedido p ON p.id_cliente = c.id_cliente
+WHERE p.id_pedido IS NULL;
+
+- RIGHT JOIN
+SELECT c.nombre_cliente
+FROM cliente c
+RIGHT JOIN pedido p ON c.id_cliente = p.id_cliente
+WHERE p.id_cliente IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+3. 
 
