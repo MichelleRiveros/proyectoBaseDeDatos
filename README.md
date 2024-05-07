@@ -479,26 +479,26 @@ INSERT INTO estado_pedido (id_estado, estado) VALUES
 -- Pedido
 
 INSERT INTO pedido (fecha_pedido, fecha_esperada, fecha_entrega, comentarios, id_estado, id_cliente) VALUES
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 1),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 2),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 3),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 4),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 5),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 6),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 7),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 8),
+('2024-05-07', '2024-05-10', '2024-05-10', 'Cancelado', 4, 1),
+('2024-05-07', '2024-05-10', '2024-01-10', 'Completado', 3, 2),
+('2024-05-07', '2024-05-10', '2024-05-10', 'Completado', 3, 3),
+('2024-05-07', '2024-05-10', '2024-05-10', 'Cancelado', 4, 4),
+('2024-05-07', '2024-05-10', '2024-05-10', 'Cancelado', 4, 5),
+('2024-05-07', '2024-05-10', '2024-05-10', 'Completado', 3, 6),
+('2024-05-07', '2024-05-10', '2024-05-10', 'Completado', 3, 7),
+('2024-05-07', '2024-05-10', '2024-05-10', 'Cancelado', 4, 8),
 ('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 9),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 10),
+('2024-05-07', '2024-05-10', '2024-05-10', 'Cancelado', 4, 10),
 ('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 11),
 ('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 12),
 ('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 13),
 ('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 14),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 15),
+('2024-05-07', '2024-05-10', '2024-05-10', 'Completado', 3, 15),
 ('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 16),
 ('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 17),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 18),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 1, 19),
-('2024-05-07', '2024-05-10', '2024-05-10', 'Pedido en proceso', 5, 20);
+('2024-05-07', '2024-05-10', '2024-05-10', 'Completado', 3, 18),
+('2024-05-07', '2024-05-10', '2024-05-10', 'Completado', 3, 19),
+('2024-05-07', '2024-05-10', '2024-05-10', 'No entregado a tiempo', 5, 20);
 
 -- Detalle_pedido
 
@@ -739,4 +739,80 @@ WHERE e.estado = "no entregado a tiempo";
 +-----------+------------+----------------+---------------+
 1 row in set (0.00 sec)
   ```
+
+10. Devuelve un listado con el código de pedido, código de cliente, fecha
+esperada y fecha de entrega de los pedidos cuya fecha de entrega ha sido al
+menos dos días antes de la fecha esperada.
+
+- ADDDATE
+```mysql
+SELECT id_pedido, id_cliente, fecha_esperada, fecha_entrega
+FROM pedido
+WHERE fecha_entrega <= ADDDATE(fecha_esperada, -2);
+
+Empty set (0.00 sec)
+  ```
+
+- DATEDIFF
+```mysql
+SELECT id_pedido, id_cliente, fecha_esperada, fecha_entrega
+FROM pedido
+WHERE DATEDIFF(fecha_esperada, fecha_entrega) >= 2;
+
+Empty set (0.00 sec)
+  ```
+
+- ¿Sería posible resolver esta consulta utilizando el operador de suma + o
+resta -?
+
+```mysql
+SELECT id_pedido, id_cliente, fecha_esperada, fecha_entrega
+FROM pedido
+WHERE fecha_entrega <= fecha_esperada - INTERVAL 2 DAY;
+
+Empty set (0.00 sec)
+  ```
+
+11. Devuelve un listado de todos los pedidos que fueron rechazados en 2009.
+
+```mysql
+SELECT p.id_pedido
+FROM pedido as p
+JOIN estado_pedido as e ON e.id_estado = p.id_estado 
+WHERE e.estado = "Cancelado";
+
++-----------+
+| id_pedido |
++-----------+
+|         1 |
+|         4 |
+|         5 |
+|         8 |
+|        10 |
++-----------+
+5 rows in set (0.00 sec)
+  ```
+
+12. Devuelve un listado de todos los pedidos que han sido entregados en el
+mes de enero de cualquier año.
+
+
+```mysql
+SELECT p.id_pedido
+FROM pedido as p
+JOIN estado_pedido as e ON e.id_estado = p.id_estado 
+WHERE e.estado = "Completado" AND MONTH(fecha_entrega) = 1;
+
++-----------+
+| id_pedido |
++-----------+
+|         2 |
++-----------+
+1 row in set (0.00 sec)
+  ```
+
+13. Devuelve un listado con todos los pagos que se realizaron en el
+año 2008 mediante Paypal. Ordene el resultado de mayor a menor.
+
+
 
