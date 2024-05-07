@@ -1293,8 +1293,7 @@ GROUP BY c.nombre_cliente, gp.gama;
 
 Resuelva todas las consultas utilizando las cláusulas LEFT JOIN, RIGHT JOIN, NATURAL LEFT JOIN y NATURAL RIGHT JOIN.
 
-1. Devuelve un listado que muestre solamente los clientes que no han
-realizado ningún pago.
+1. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pago.
 
 ```mysql
 - LEFT JOIN
@@ -1312,8 +1311,7 @@ WHERE c.id_cliente IS NULL;
 Empty set (0.00 sec)
  ```
 
-2. Devuelve un listado que muestre solamente los clientes que no han
-realizado ningún pedido.
+2. Devuelve un listado que muestre solamente los clientes que no han realizado ningún pedido.
 
 ```mysql
 - LEFT JOIN
@@ -1331,5 +1329,648 @@ WHERE p.id_cliente IS NULL;
 Empty set (0.00 sec)
  ```
 
-3. 
+3. Devuelve un listado que muestre los clientes que no han realizado ningún pago y los que no han realizado ningún pedido.
 
+ ```myqsl
+- LEFT JOIN
+SELECT c.nombre_cliente
+FROM cliente c
+LEFT JOIN pedido p ON p.id_cliente = c.id_cliente
+LEFT JOIN pago pa ON c.id_cliente = p.id_cliente
+WHERE p.id_pedido IS NULL AND pa.id_cliente IS NULL ;
+
+- RIGHT JOIN
+SELECT c.nombre_cliente
+FROM cliente c
+RIGHT JOIN pedido p ON c.id_cliente = p.id_cliente}
+RIGHT JOIN pago pa ON c.id_cliente = pa.id_cliente
+WHERE p.id_cliente IS NULL AND pa.id_cliente IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+4. Devuelve un listado que muestre solamente los empleados que no tienen una oficina asociada.
+
+```mysql
+- LEFT JOIN
+SELECT e.id_empleado, e.nombre
+FROM empleado e
+LEFT JOIN oficina o ON e.id_oficina = o.id_oficina
+WHERE o.id_oficina IS NULL;
+
+- RIGHT JOIN
+SELECT e.id_empleado, e.nombre
+FROM empleado e
+RIGHT JOIN oficina o ON e.id_oficina = o.id_oficina
+WHERE e.id_empleado IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+5. Devuelve un listado que muestre solamente los empleados que no tienen un cliente asociado.
+
+```mysql
+- LEFT JOIN
+SELECT e.nombre
+FROM empleado as e
+LEFT JOIN cliente as c ON c.id_empleado_rep_ventas = e.id_empleado
+WHERE e.id_empleado IS NULL;
+
+- RIGHT JOIN
+SELECT  e.nombre
+FROM cliente as c
+RIGHT JOIN empleado as e ON e.id_empleado = c.id_empleado_rep_ventas
+WHERE e.id_empleado IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+6. Devuelve un listado que muestre solamente los empleados que no tienen un cliente asociado junto con los datos de la oficina donde trabajan.
+
+```mysql
+- LEFT JOIN
+SELECT e.nombre, o.id_oficina, o.nombre, o.telefono, d.linea_direccion
+FROM empleado as e
+LEFT JOIN oficina as o ON o.id_oficina = e.id_oficina
+LEFT JOIN oficina_direccion as od ON od.id_oficina = o.id_oficina
+LEFT JOIN direccion as d ON od.id_direccion = d.id_direccion
+LEFT JOIN cliente as c ON c.id_empleado_rep_ventas = e.id_empleado
+WHERE e.id_empleado IS NULL;
+
+- RIGHT JOIN
+SELECT  e.nombre, o.id_oficina, o.nombre, o.telefono, d.linea_direccion
+FROM cliente as cli
+RIGHT JOIN empleado as e ON e.id_empleado = cli.id_empleado_rep_ventas
+RIGHT JOIN oficina as o ON o.id_oficina = e.id_oficina
+RIGHT JOIN oficina_direccion as od ON od.id_oficina = o.id_oficina
+RIGHT JOIN direccion as d ON od.id_direccion = d.id_direccion
+RIGHT JOIN cliente as c ON c.id_empleado_rep_ventas = e.id_empleado
+WHERE e.id_empleado IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+7. Devuelve un listado que muestre los empleados que no tienen una oficina asociada y los que no tienen un cliente asociado.
+
+```mysql
+- LEFT JOIN
+SELECT e.id_empleado, e.nombre, e.apellido1, e.apellido2
+FROM empleado e
+LEFT JOIN oficina o ON e.id_oficina = o.id_oficina
+LEFT JOIN cliente c ON e.id_empleado = c.id_empleado_rep_ventas
+WHERE o.id_oficina IS NULL AND c.id_empleado_rep_ventas IS NULL;
+
+- RIGHT JOIN
+SELECT e.id_empleado, e.nombre, e.apellido1, e.apellido2
+FROM oficina o
+RIGHT JOIN empleado e ON e.id_oficina = o.id_oficina
+RIGHT JOIN cliente c ON e.id_empleado = c.id_empleado_rep_ventas
+WHERE o.id_oficina IS NULL AND c.id_empleado_rep_ventas IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+8. Devuelve un listado de los productos que nunca han aparecido en un pedido.
+
+```mysql
+- LEFT JOIN
+SELECT p.id_producto, p.nombre
+FROM producto p
+LEFT JOIN detalle_pedido dp ON p.id_producto = dp.id_producto
+WHERE dp.id_producto IS NULL;
+
+- RIGHT JOIN
+SELECT p.id_producto, p.nombre
+FROM detalle_pedido dp
+RIGHT JOIN producto p ON dp.id_producto = p.id_producto
+WHERE dp.id_producto IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+9. Devuelve un listado de los productos que nunca han aparecido en un pedido. El resultado debe mostrar el nombre, la descripción y la imagen del producto.
+
+```mysql
+- LEFT JOIN
+SELECT p.nombre, p.descripcion, p.imagen
+FROM detalle_pedido dp
+LEFT JOIN producto p ON p.id_producto = dp.id_producto
+WHERE dp.id_producto IS NULL;
+
+- RIGHT JOIN
+SELECT p.nombre, p.descripcion, p.imagen
+FROM producto p
+RIGHT JOIN detalle_pedido dp ON p.id_producto = dp.id_producto
+WHERE dp.id_producto IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+10. Devuelve las oficinas donde no trabajan ninguno de los empleados que hayan sido los representantes de ventas de algún cliente que haya realizado
+la compra de algún producto de la gama Frutales.
+
+ ```mysql
+- LEFT JOIN
+SELECT DISTINCT o.id_oficina, o.nombre
+FROM oficina o
+LEFT JOIN empleado e ON o.id_oficina = e.id_oficina
+LEFT JOIN cliente c ON e.id_empleado = c.id_empleado_rep_ventas
+LEFT JOIN pedido pe ON c.id_cliente = pe.id_cliente
+LEFT JOIN detalle_pedido dp ON pe.id_pedido = dp.id_pedido
+LEFT JOIN producto p ON dp.id_producto = p.id_producto
+LEFT JOIN gama_producto gp ON p.id_gama = gp.id_gama
+WHERE gp.gama != 'Frutales' OR gp.gama IS NULL;
+
+- RIGHT JOIN
+SELECT DISTINCT o.id_oficina, o.nombre
+FROM empleado e
+RIGHT JOIN oficina o ON e.id_oficina = o.id_oficina
+RIGHT JOIN cliente c ON e.id_empleado = c.id_empleado_rep_ventas
+RIGHT JOIN pedido pe ON c.id_cliente = pe.id_cliente
+RIGHT JOIN detalle_pedido dp ON pe.id_pedido = dp.id_pedido
+RIGHT JOIN producto p ON dp.id_producto = p.id_producto
+RIGHT JOIN gama_producto gp ON p.id_gama = gp.id_gama
+WHERE gp.gama != 'Frutales' OR gp.gama IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+11. Devuelve un listado con los clientes que han realizado algún pedido pero no han realizado ningún pago.
+
+```mysql
+- LEFT JOIN
+SELECT c.id_cliente, c.nombre_cliente
+FROM cliente c
+LEFT JOIN pedido pe ON c.id_cliente = pe.id_cliente
+LEFT JOIN pago pa ON c.id_cliente = pa.id_cliente
+WHERE pe.id_pedido IS NOT NULL AND pa.id_transaccion IS NULL;
+
+- RIGHT JOIN
+SELECT c.id_cliente, c.nombre_cliente
+FROM pedido pe
+RIGHT JOIN cliente c ON pe.id_cliente = c.id_cliente
+LEFT JOIN pago pa ON c.id_cliente = pa.id_cliente
+WHERE pa.id_transaccion IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+12. Devuelve un listado con los datos de los empleados que no tienen clientes asociados y el nombre de su jefe asociado.
+
+```mysql
+- LEFT JOIN
+SELECT e.id_empleado, e.nombre, e.apellido1, e.apellido2, e.extension, e.email, e.id_oficina, e.id_jefe, j.nombre AS nombre_jefe
+FROM empleado e
+LEFT JOIN empleado j ON e.id_jefe = j.id_empleado
+LEFT JOIN cliente c ON e.id_empleado = c.id_empleado_rep_ventas
+WHERE c.id_cliente IS NULL;
+
+- RIGHT JOIN
+SELECT e.id_empleado, e.nombre, e.apellido1, e.apellido2, e.extension, e.email, e.id_oficina, e.id_jefe,
+j.nombre AS nombre_jefe
+FROM cliente c
+RIGHT JOIN empleado e ON c.id_empleado_rep_ventas = e.id_empleado
+LEFT JOIN empleado j ON e.id_jefe = j.id_empleado
+WHERE c.id_cliente IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+
+**Consultas resumen**
+
+1. ¿Cuántos empleados hay en la compañía?
+
+```mysql
+SELECT COUNT(id_empleado)
+FROM empleado;
+
++--------------------+
+| COUNT(id_empleado) |
++--------------------+
+|                 15 |
++--------------------+
+1 row in set (0.01 sec)
+ ```
+
+2. ¿Cuántos clientes tiene cada país?
+
+ ```mysql
+SELECT p.nombre AS nombre_pais, COUNT(DISTINCT c.id_cliente) AS cantidad_clientes
+FROM cliente c
+LEFT JOIN cliente_direccion cd ON c.id_cliente = cd.id_cliente
+LEFT JOIN direccion d ON cd.id_direccion = d.id_direccion
+LEFT JOIN ciudad ciu ON d.id_ciudad = ciu.id_ciudad
+LEFT JOIN region r ON ciu.id_region = r.id_region
+LEFT JOIN pais p ON r.id_pais = p.id_pais
+GROUP BY p.nombre;
+
++----------------+-------------------+
+| nombre_pais    | cantidad_clientes |
++----------------+-------------------+
+| Alemania       |                 2 |
+| Brasil         |                 1 |
+| China          |                 2 |
+| España         |                 3 |
+| Estados Unidos |                 2 |
+| Francia        |                 2 |
+| Italia         |                 2 |
+| Japón          |                 2 |
+| Portugal       |                 2 |
+| Reino Unido    |                 2 |
++----------------+-------------------+
+10 rows in set (0.01 sec)
+ ```
+
+3. ¿Cuál fue el pago medio en 2009?
+
+```mysql
+SELECT AVG(total) AS pago_medio_2009
+FROM pago
+WHERE YEAR(fecha_pago) = 2009;
+
++-----------------+
+| pago_medio_2009 |
++-----------------+
+|            NULL |
++-----------------+
+1 row in set (0.00 sec)
+ ```
+
+4. ¿Cuántos pedidos hay en cada estado? Ordena el resultado de forma
+descendente por el número de pedidos.
+
+```mysql
+SELECT r.nombre AS region, COUNT(p.id_pedido) AS cantidad_pedidos
+FROM pedido p
+JOIN cliente c ON p.id_cliente = c.id_cliente
+JOIN cliente_direccion cd ON c.id_cliente = cd.id_cliente
+JOIN direccion d ON cd.id_direccion = d.id_direccion
+JOIN ciudad ci ON d.id_ciudad = ci.id_ciudad
+JOIN region r ON ci.id_region = r.id_region
+GROUP BY r.nombre
+ORDER BY cantidad_pedidos DESC;
+
++----------------+------------------+
+| region         | cantidad_pedidos |
++----------------+------------------+
+| Madrid         |                2 |
+| Île-de-France  |                2 |
+| Lombardía      |                2 |
+| Baviera        |                2 |
+| Lisboa         |                2 |
+| Londres        |                2 |
+| California     |                2 |
+| Shanghái       |                2 |
+| Kantō          |                2 |
+| Cataluña       |                1 |
+| São Paulo      |                1 |
++----------------+------------------+
+11 rows in set (0.00 sec)
+ ```
+
+5. Calcula el precio de venta del producto más caro y más barato en una
+misma consulta.
+
+```mysql
+SELECT 
+    MAX(precio_venta) AS precio_mas_caro,
+    MIN(precio_venta) AS precio_mas_barato
+FROM producto;
+
++-----------------+-------------------+
+| precio_mas_caro | precio_mas_barato |
++-----------------+-------------------+
+|       899.99000 |          24.99000 |
++-----------------+-------------------+
+1 row in set (0.00 sec)
+ ```
+
+6. Calcula el número de clientes que tiene la empresa.
+
+```mysql
+SELECT COUNT(id_cliente)
+FROM cliente;
+
++-------------------+
+| COUNT(id_cliente) |
++-------------------+
+|                20 |
++-------------------+
+1 row in set (0.00 sec)
+ ```
+
+7. ¿Cuántos clientes existen con domicilio en la ciudad de Madrid?
+
+```mysql
+SELECT COUNT(DISTINCT c.id_cliente) AS total_clientes_madrid
+FROM cliente c
+JOIN cliente_direccion cd ON c.id_cliente = cd.id_cliente
+JOIN direccion d ON cd.id_direccion = d.id_direccion
+JOIN ciudad ci ON d.id_ciudad = ci.id_ciudad
+WHERE ci.nombre = 'Madrid';
+
++-----------------------+
+| total_clientes_madrid |
++-----------------------+
+|                     2 |
++-----------------------+
+1 row in set (0.00 sec)
+ ```
+
+8. ¿Calcula cuántos clientes tiene cada una de las ciudades que empiezan
+por M?
+
+```mysql
+SELECT ci.nombre AS ciudad, COUNT(DISTINCT c.id_cliente) AS total_clientes
+FROM cliente c
+JOIN cliente_direccion cd ON c.id_cliente = cd.id_cliente
+JOIN direccion d ON cd.id_direccion = d.id_direccion
+JOIN ciudad ci ON d.id_ciudad = ci.id_ciudad
+WHERE ci.nombre LIKE 'M%'
+GROUP BY ci.nombre;
+
++---------+----------------+
+| ciudad  | total_clientes |
++---------+----------------+
+| Madrid  |              2 |
+| Milán   |              2 |
+| Múnich  |              2 |
++---------+----------------+
+3 rows in set (0.00 sec)
+ ```
+
+9. Devuelve el nombre de los representantes de ventas y el número de clientes al que atiende cada uno.
+
+```mysql
+SELECT e.nombre AS representante_ventas, COUNT(DISTINCT c.id_cliente) AS numero_clientes
+FROM empleado e
+LEFT JOIN cliente c ON e.id_empleado = c.id_empleado_rep_ventas
+GROUP BY e.nombre;
+
++----------------------+-----------------+
+| representante_ventas | numero_clientes |
++----------------------+-----------------+
+| Alexander            |               1 |
+| Ava                  |               2 |
+| David                |               0 |
+| Emily                |               1 |
+| Emma                 |               2 |
+| Isabella             |               1 |
+| James                |               2 |
+| Jane                 |               1 |
+| John                 |               1 |
+| Mia                  |               1 |
+| Michael              |               1 |
+| Noah                 |               2 |
+| Olivia               |               2 |
+| Sophia               |               1 |
+| William              |               2 |
++----------------------+-----------------+
+15 rows in set (0.00 sec)
+ ```
+
+10. Calcula el número de clientes que no tiene asignado representante de
+ventas.
+
+```mysql
+SELECT COUNT(id_cliente) AS clientes_sin_representante
+FROM cliente
+WHERE id_empleado_rep_ventas IS NULL;
+
++----------------------------+
+| clientes_sin_representante |
++----------------------------+
+|                          0 |
++----------------------------+
+1 row in set (0.00 sec)
+ ```
+
+11. Calcula la fecha del primer y último pago realizado por cada uno de los clientes. El listado deberá mostrar el nombre y los apellidos de cada cliente.
+
+```mysql
+SELECT c.nombre_cliente, c.apellido1_cliente,
+       MIN(p.fecha_pago) AS primer_pago,
+       MAX(p.fecha_pago) AS ultimo_pago
+FROM cliente c
+LEFT JOIN pago p ON c.id_cliente = p.id_cliente
+GROUP BY c.id_cliente, c.nombre_cliente, c.apellido1_cliente;
+
++----------------+-------------------+-------------+-------------+
+| nombre_cliente | apellido1_cliente | primer_pago | ultimo_pago |
++----------------+-------------------+-------------+-------------+
+| Juan           | Pérez             | 2022-05-01  | 2022-05-01  |
+| María          | López             | 2024-05-02  | 2024-05-02  |
+| José           | Martínez          | 2024-05-03  | 2024-05-03  |
+| Ana            | Gómez             | 2020-01-04  | 2020-01-04  |
+| Carlos         | Díaz              | 2022-05-05  | 2022-05-05  |
+| Laura          | Ruiz              | 2024-05-06  | 2024-05-06  |
+| Pedro          | Sánchez           | 2008-03-07  | 2008-03-07  |
+| Sara           | Gutiérrez         | 2024-01-08  | 2024-01-08  |
+| Miguel         | Torres            | 2024-05-09  | 2024-05-09  |
+| Carmen         | Vázquez           | 2024-05-10  | 2024-05-10  |
+| Elena          | Moreno            | 2008-01-11  | 2008-01-11  |
+| Francisco      | Álvarez           | 2024-05-12  | 2024-05-12  |
+| Isabel         | Jiménez           | 2021-05-13  | 2021-05-13  |
+| Daniel         | Ortega            | 2014-05-14  | 2014-05-14  |
+| Lucía          | Flores            | 2015-05-15  | 2015-05-15  |
+| Manuel         | Romero            | 2024-05-16  | 2024-05-16  |
+| Rosa           | Santos            | 2024-05-17  | 2024-05-17  |
+| Javier         | Morales           | 2024-05-18  | 2024-05-18  |
+| Silvia         | Iglesias          | 2024-05-19  | 2024-05-19  |
+| Alberto        | Cruz              | 2024-05-20  | 2024-05-20  |
++----------------+-------------------+-------------+-------------+
+20 rows in set (0.00 sec)
+ ```
+
+12. Calcula el número de productos diferentes que hay en cada uno de los
+pedidos.
+
+```mysql
+SELECT id_pedido, COUNT(DISTINCT id_producto) AS num_productos_diferentes
+FROM detalle_pedido
+GROUP BY id_pedido;
+
++-----------+--------------------------+
+| id_pedido | num_productos_diferentes |
++-----------+--------------------------+
+|         1 |                        1 |
+|         2 |                        1 |
+|         3 |                        1 |
+|         4 |                        1 |
+|         5 |                        1 |
+|         6 |                        1 |
+|         7 |                        1 |
+|         8 |                        1 |
+|         9 |                        1 |
+|        10 |                        1 |
+|        11 |                        1 |
+|        12 |                        1 |
+|        13 |                        1 |
+|        14 |                        1 |
+|        15 |                        1 |
+|        16 |                        1 |
+|        17 |                        1 |
+|        18 |                        1 |
+|        19 |                        1 |
+|        20 |                        1 |
++-----------+--------------------------+
+20 rows in set (0.00 sec)
+ ```
+
+13. Calcula la suma de la cantidad total de todos los productos que aparecen en cada uno de los pedidos.
+
+```mysql
+SELECT id_pedido, SUM(cantidad) AS cantidad_total
+FROM detalle_pedido
+GROUP BY id_pedido;
+
++-----------+----------------+
+| id_pedido | cantidad_total |
++-----------+----------------+
+|         1 |              1 |
+|         2 |              1 |
+|         3 |              1 |
+|         4 |              1 |
+|         5 |              1 |
+|         6 |              1 |
+|         7 |              1 |
+|         8 |              1 |
+|         9 |              1 |
+|        10 |              1 |
+|        11 |              1 |
+|        12 |              1 |
+|        13 |              1 |
+|        14 |              1 |
+|        15 |              1 |
+|        16 |              1 |
+|        17 |              1 |
+|        18 |              1 |
+|        19 |              1 |
+|        20 |              1 |
++-----------+----------------+
+20 rows in set (0.00 sec)
+ ```
+
+14. Devuelve un listado de los 20 productos más vendidos y el número total de unidades que se han vendido de cada uno. El listado deberá estar ordenado por el número total de unidades vendidas.
+
+```mysql
+SELECT dp.id_producto, p.nombre AS nombre_producto, SUM(dp.cantidad) AS total_unidades_vendidas
+FROM detalle_pedido dp
+JOIN producto p ON dp.id_producto = p.id_producto
+GROUP BY dp.id_producto, p.nombre
+ORDER BY total_unidades_vendidas DESC
+LIMIT 20;
+
++-------------+-----------------+-------------------------+
+| id_producto | nombre_producto | total_unidades_vendidas |
++-------------+-----------------+-------------------------+
+|           1 | Lavadora        |                       4 |
+|           2 | Sofá            |                       4 |
+|           3 | Televisor       |                       3 |
+|           4 | Muñeca          |                       3 |
+|           5 | Camiseta        |                       3 |
+|           6 | Florero         |                       3 |
++-------------+-----------------+-------------------------+
+6 rows in set (0.00 sec)
+ ```
+
+15. La facturación que ha tenido la empresa en toda la historia, indicando la base imponible, el IVA y el total facturado. La base imponible se calcula sumando el coste del producto por el número de unidades vendidas de la tabla detalle_pedido. El IVA es el 21 % de la base imponible, y el total la suma de los dos campos anteriores.
+
+```mysql
+SELECT 
+    SUM(dp.precio_unidad * dp.cantidad) AS base_imponible,
+    SUM(dp.precio_unidad * dp.cantidad) * 0.21 AS iva,
+    SUM(dp.precio_unidad * dp.cantidad) + (SUM(dp.precio_unidad * dp.cantidad) * 0.21) AS total_facturado
+FROM detalle_pedido dp;
+
++----------------+-----------+-----------------+
+| base_imponible | iva       | total_facturado |
++----------------+-----------+-----------------+
+|        7384.80 | 1550.8080 |       8935.6080 |
++----------------+-----------+-----------------+
+1 row in set (0.00 sec)
+ ```
+
+16. La misma información que en la pregunta anterior, pero agrupada por código de producto.
+
+```mysql
+SELECT 
+    dp.id_producto,
+    p.nombre AS nombre_producto,
+    SUM(dp.precio_unidad * dp.cantidad) AS base_imponible,
+    SUM(dp.precio_unidad * dp.cantidad) * 0.21 AS iva,
+    SUM(dp.precio_unidad * dp.cantidad) + (SUM(dp.precio_unidad * dp.cantidad) * 0.21) AS total_facturado
+FROM detalle_pedido dp
+JOIN producto p ON dp.id_producto = p.id_producto
+GROUP BY dp.id_producto, p.nombre;
+
++-------------+-----------------+----------------+----------+-----------------+
+| id_producto | nombre_producto | base_imponible | iva      | total_facturado |
++-------------+-----------------+----------------+----------+-----------------+
+|           1 | Lavadora        |        2399.96 | 503.9916 |       2903.9516 |
+|           2 | Sofá            |        1999.96 | 419.9916 |       2419.9516 |
+|           3 | Televisor       |        2699.97 | 566.9937 |       3266.9637 |
+|           4 | Muñeca          |         119.97 |  25.1937 |        145.1637 |
+|           5 | Camiseta        |          74.97 |  15.7437 |         90.7137 |
+|           6 | Florero         |          89.97 |  18.8937 |        108.8637 |
++-------------+-----------------+----------------+----------+-----------------+
+6 rows in set (0.00 sec)
+ ```
+
+17. La misma información que en la pregunta anterior, pero agrupada por código de producto filtrada por los códigos que empiecen por OR.
+
+```mysql
+SELECT 
+    dp.id_producto,
+    p.nombre AS nombre_producto,
+    SUM(dp.precio_unidad * dp.cantidad) AS base_imponible,
+    SUM(dp.precio_unidad * dp.cantidad) * 0.21 AS iva,
+    SUM(dp.precio_unidad * dp.cantidad) + (SUM(dp.precio_unidad * dp.cantidad) * 0.21) AS total_facturado
+FROM detalle_pedido dp
+JOIN producto p ON dp.id_producto = p.id_producto
+WHERE p.nombre LIKE 'OR%'
+GROUP BY dp.id_producto, p.nombre;
+
+Empty set (0.00 sec)
+ ```
+
+
+18. Lista las ventas totales de los productos que hayan facturado más de 3000 euros. Se mostrará el nombre, unidades vendidas, total facturado y total facturado con impuestos (21% IVA).
+
+```mysql
+SELECT 
+    p.nombre AS nombre_producto,
+    SUM(dp.cantidad) AS unidades_vendidas,
+    SUM(dp.precio_unidad * dp.cantidad) AS total_facturado_sin_iva,
+    SUM(dp.precio_unidad * dp.cantidad) * 1.21 AS total_facturado_con_iva
+FROM detalle_pedido dp
+JOIN producto p ON dp.id_producto = p.id_producto
+GROUP BY p.nombre
+HAVING total_facturado_sin_iva > 3000;
+
+Empty set (0.00 sec)
+ ```
+
+19. Muestre la suma total de todos los pagos que se realizaron para cada uno de los años que aparecen en la tabla pagos.
+
+```mysql
+SELECT 
+    YEAR(fecha_pago) AS año,
+    SUM(total) AS suma_total_pagos
+FROM pago
+GROUP BY YEAR(fecha_pago);
+
++------+------------------+
+| año  | suma_total_pagos |
++------+------------------+
+| 2022 |              625 |
+| 2024 |             4095 |
+| 2020 |               40 |
+| 2008 |              625 |
+| 2021 |              600 |
+| 2014 |              500 |
+| 2015 |              900 |
++------+------------------+
+7 rows in set (0.00 sec)
+ ```
