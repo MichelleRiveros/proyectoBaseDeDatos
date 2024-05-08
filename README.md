@@ -1974,3 +1974,580 @@ GROUP BY YEAR(fecha_pago);
 +------+------------------+
 7 rows in set (0.00 sec)
  ```
+
+
+**Subconsultas**
+Con operadores básicos de comparación
+
+1. Devuelve el nombre del cliente con mayor límite de crédito.
+   
+```mysql
+SELECT nombre_cliente
+FROM cliente
+ORDER BY limite_credito DESC
+LIMIT 1;
+
++----------------+
+| nombre_cliente |
++----------------+
+| Alberto        |
++----------------+
+1 row in set (0.00 sec)
+ ```
+2. Devuelve el nombre del producto que tenga el precio de venta más caro.
+
+```mysql
+SELECT nombre
+FROM producto
+ORDER BY precio_venta DESC
+LIMIT 1;
+
++-----------+
+| nombre    |
++-----------+
+| Televisor |
++-----------+
+1 row in set (0.00 sec)
+ ```
+
+3. Devuelve el nombre del producto del que se han vendido más unidades.
+(Tenga en cuenta que tendrá que calcular cuál es el número total de
+unidades que se han vendido de cada producto a partir de los datos de la
+tabla detalle_pedido)
+
+```mysql
+SELECT p.nombre
+FROM producto p
+JOIN detalle_pedido dp ON p.id_producto = dp.id_producto
+GROUP BY p.id_producto
+ORDER BY SUM(dp.cantidad) DESC
+LIMIT 1;
+
++--------+
+| nombre |
++--------+
+| Sofá   |
++--------+
+1 row in set (0.00 sec)
+ ```
+
+4. Los clientes cuyo límite de crédito sea mayor que los pagos que haya
+realizado. (Sin utilizar INNER JOIN).
+
+```mysql
+SELECT nombre_cliente
+FROM cliente
+WHERE limite_credito > (
+    SELECT SUM(total)
+    FROM pago
+    WHERE id_cliente = cliente.id_cliente
+);
+
++----------------+
+| nombre_cliente |
++----------------+
+| Juan           |
+| María          |
+| José           |
+| Ana            |
+| Carlos         |
+| Laura          |
+| Pedro          |
+| Sara           |
+| Miguel         |
+| Carmen         |
+| Elena          |
+| Francisco      |
+| Isabel         |
+| Daniel         |
+| Lucía          |
+| Manuel         |
+| Rosa           |
+| Javier         |
+| Silvia         |
+| Alberto        |
++----------------+
+20 rows in set (0.00 sec)
+ ```
+
+5. Devuelve el producto que más unidades tiene en stock.
+   
+```mysql
+SELECT p.nombre
+FROM producto as p
+JOIN inventario as i ON i.id_producto = p.id_producto
+ORDER BY i.cantidad_en_stock DESC
+LIMIT 1;
+
++----------+
+| nombre   |
++----------+
+| Camiseta |
++----------+
+1 row in set (0.00 sec)
+ ```
+
+6. Devuelve el producto que menos unidades tiene en stock.
+   
+```mysql
+SELECT p.nombre
+FROM producto as p
+JOIN inventario as i ON i.id_producto = p.id_producto
+ORDER BY i.cantidad_en_stock ASC
+LIMIT 1;
+
++----------+
+| nombre   |
++----------+
+| Lavadora |
++----------+
+1 row in set (0.00 sec)
+ ```
+
+7. Devuelve el nombre, los apellidos y el email de los empleados que están a cargo de Alberto Soria.
+   
+```mysql
+SELECT e.nombre, e.apellido1, e.apellido2, e.email
+FROM empleado e
+JOIN empleado jefe ON e.id_jefe = jefe.id_empleado
+WHERE jefe.nombre = 'Alberto' AND jefe.apellido1 = 'Soria';
+
+Empty set (0.00 sec)
+ ```
+
+Subconsultas con ALL y ANY
+
+8. Devuelve el nombre del cliente con mayor límite de crédito.
+   
+```mysql
+SELECT nombre_cliente
+FROM cliente
+WHERE limite_credito >= ALL (SELECT limite_credito FROM cliente);
+
++----------------+
+| nombre_cliente |
++----------------+
+| Alberto        |
++----------------+
+1 row in set (0.00 sec)
+ ```
+
+9. Devuelve el nombre del producto que tenga el precio de venta más caro.
+
+```mysql
+SELECT nombre
+FROM producto
+WHERE precio_venta >= ALL (SELECT precio_venta FROM producto);
+
++-----------+
+| nombre    |
++-----------+
+| Televisor |
++-----------+
+1 row in set (0.00 sec)
+ ```
+
+10. Devuelve el producto que menos unidades tiene en stock.
+    
+```mysql
+SELECT p.nombre
+FROM producto as p
+JOIN detalle_pedido as d ON d.id_producto = p.id_producto
+WHERE d.cantidad <= ALL (SELECT cantidad_en_stock FROM inventario);
+
++-----------+
+| nombre    |
++-----------+
+| Lavadora  |
+| Sofá      |
+| Televisor |
+| Muñeca    |
+| Camiseta  |
+| Florero   |
++-----------+
+6 rows in set (0.00 sec)
+ ```
+
+
+Subconsultas con IN y NOT IN
+
+11. Devuelve el nombre, apellido1 y cargo de los empleados que no
+representen a ningún cliente.
+
+```mysql
+SELECT nombre, apellido1, puesto
+FROM empleado
+WHERE id_empleado NOT IN (SELECT DISTINCT id_empleado_rep_ventas FROM cliente);
+
++--------+-----------+-------------------------+
+| nombre | apellido1 | puesto                  |
++--------+-----------+-------------------------+
+| David  | Martinez  | Representante de Ventas |
++--------+-----------+-------------------------+
+1 row in set (0.00 sec)
+ ```
+
+12. Devuelve un listado que muestre solamente los clientes que no han
+realizado ningún pago.
+
+```mysql
+SELECT *
+FROM cliente
+WHERE id_cliente NOT IN (SELECT id_cliente FROM pago);
+
+Empty set (0.00 sec)
+ ```
+
+13. Devuelve un listado que muestre solamente los clientes que sí han realizado algún pago.
+    
+```mysql
+SELECT *
+FROM cliente
+WHERE id_cliente IN (SELECT id_cliente FROM pago);
+
++------------+----------------+-------------------+-------------------+-----------+------------------------+----------------+-------------+
+| id_cliente | nombre_cliente | apellido1_cliente | apellido2_cliente | telefono  | id_empleado_rep_ventas | limite_credito | id_contacto |
++------------+----------------+-------------------+-------------------+-----------+------------------------+----------------+-------------+
+|          1 | Juan           | Pérez             | González          | 123456789 |                     11 |        5000.00 |           1 |
+|          2 | María          | López             | García            | 987654321 |                      6 |        8000.00 |           2 |
+|          3 | José           | Martínez          | Rodríguez         | 555555555 |                      7 |       10000.00 |           3 |
+|          4 | Ana            | Gómez             | Fernández         | 444444444 |                      8 |       12000.00 |           4 |
+|          5 | Carlos         | Díaz              | Hernández         | 333333333 |                      9 |       15000.00 |           5 |
+|          6 | Laura          | Ruiz              | Jiménez           | 222222222 |                     10 |       20000.00 |           1 |
+|          7 | Pedro          | Sánchez           | Pérez             | 111111111 |                     11 |       25000.00 |           2 |
+|          8 | Sara           | Gutiérrez         | López             | 999999999 |                     12 |       30000.00 |           3 |
+|          9 | Miguel         | Torres            | Martínez          | 888888888 |                     13 |       35000.00 |           4 |
+|         10 | Carmen         | Vázquez           | Rodríguez         | 777777777 |                     14 |       40000.00 |           5 |
+|         11 | Elena          | Moreno            | Martínez          | 666666666 |                     15 |       45000.00 |           1 |
+|         12 | Francisco      | Álvarez           | Sánchez           | 555555555 |                      4 |       50000.00 |           2 |
+|         13 | Isabel         | Jiménez           | Gutiérrez         | 444444444 |                      3 |       55000.00 |           3 |
+|         14 | Daniel         | Ortega            | García            | 333333333 |                      2 |       60000.00 |           4 |
+|         15 | Lucía          | Flores            | Rodríguez         | 222222222 |                      1 |       65000.00 |           5 |
+|         16 | Manuel         | Romero            | Pérez             | 111111111 |                     10 |       70000.00 |           1 |
+|         17 | Rosa           | Santos            | Hernández         | 999999999 |                      9 |       75000.00 |           2 |
+|         18 | Javier         | Morales           | López             | 888888888 |                      8 |       80000.00 |           3 |
+|         19 | Silvia         | Iglesias          | Martínez          | 777777777 |                      7 |       85000.00 |           4 |
+|         20 | Alberto        | Cruz              | González          | 666666666 |                      6 |       90000.00 |           5 |
++------------+----------------+-------------------+-------------------+-----------+------------------------+----------------+-------------+
+20 rows in set (0.01 sec)
+ ```
+
+14. Devuelve un listado de los productos que nunca han aparecido en un
+pedido.
+
+```mysql
+SELECT *
+FROM producto
+WHERE id_producto NOT IN (SELECT id_producto FROM detalle_pedido);
+
+Empty set (0.00 sec)
+ ```
+
+15. Devuelve el nombre, apellidos, puesto y teléfono de la oficina de aquellos empleados que no sean representante de ventas de ningún cliente.
+    
+```mysql
+SELECT e.nombre, e.apellido1, e.apellido2, e.puesto, o.telefono
+FROM empleado e
+JOIN oficina o ON e.id_oficina = o.id_oficina
+WHERE e.id_empleado NOT IN (SELECT DISTINCT id_empleado_rep_ventas FROM cliente WHERE id_empleado_rep_ventas IS NOT NULL);
+
++--------+-----------+-----------+-------------------------+-----------+
+| nombre | apellido1 | apellido2 | puesto                  | telefono  |
++--------+-----------+-----------+-------------------------+-----------+
+| David  | Martinez  |           | Representante de Ventas | 987654321 |
++--------+-----------+-----------+-------------------------+-----------+
+1 row in set (0.00 sec)
+ ```
+
+16. Devuelve las oficinas donde no trabajan ninguno de los empleados que
+hayan sido los representantes de ventas de algún cliente que haya realizado la compra de algún producto de la gama Frutales.
+
+```mysql
+SELECT *
+FROM oficina
+WHERE id_oficina NOT IN (SELECT DISTINCT id_oficina FROM empleado WHERE id_empleado IN (SELECT id_empleado_rep_ventas FROM cliente WHERE id_cliente IN (SELECT id_cliente FROM pedido WHERE id_gama IN (SELECT id_gama FROM gama_producto WHERE gama = 'Frutales'))));
+
+Empty set (0.00 sec)
+ ```
+
+17. Devuelve un listado con los clientes que han realizado algún pedido pero no han realizado ningún pago.
+    
+```mysql
+SELECT *
+FROM cliente
+WHERE id_cliente IN (SELECT id_cliente FROM pedido) AND id_cliente NOT IN (SELECT id_cliente FROM pago);
+
+Empty set (0.00 sec)
+ ```
+
+Subconsultas con EXISTS y NOT EXISTS
+
+18. Devuelve un listado que muestre solamente los clientes que no han
+realizado ningún pago.
+
+```mysql
+SELECT *
+FROM cliente c
+WHERE NOT EXISTS (
+    SELECT *
+    FROM pago p
+    WHERE p.id_cliente = c.id_cliente
+);
+
+Empty set (0.00 sec)
+ ```
+
+19. Devuelve un listado que muestre solamente los clientes que sí han realizado algún pago.
+
+```mysql
+SELECT *
+FROM cliente c
+WHERE EXISTS (
+    SELECT *
+    FROM pago p
+    WHERE p.id_cliente = c.id_cliente
+);
+
++------------+----------------+-------------------+-------------------+-----------+------------------------+----------------+-------------+
+| id_cliente | nombre_cliente | apellido1_cliente | apellido2_cliente | telefono  | id_empleado_rep_ventas | limite_credito | id_contacto |
++------------+----------------+-------------------+-------------------+-----------+------------------------+----------------+-------------+
+|          1 | Juan           | Pérez             | González          | 123456789 |                     11 |        5000.00 |           1 |
+|          2 | María          | López             | García            | 987654321 |                      6 |        8000.00 |           2 |
+|          3 | José           | Martínez          | Rodríguez         | 555555555 |                      7 |       10000.00 |           3 |
+|          4 | Ana            | Gómez             | Fernández         | 444444444 |                      8 |       12000.00 |           4 |
+|          5 | Carlos         | Díaz              | Hernández         | 333333333 |                      9 |       15000.00 |           5 |
+|          6 | Laura          | Ruiz              | Jiménez           | 222222222 |                     10 |       20000.00 |           1 |
+|          7 | Pedro          | Sánchez           | Pérez             | 111111111 |                     11 |       25000.00 |           2 |
+|          8 | Sara           | Gutiérrez         | López             | 999999999 |                     12 |       30000.00 |           3 |
+|          9 | Miguel         | Torres            | Martínez          | 888888888 |                     13 |       35000.00 |           4 |
+|         10 | Carmen         | Vázquez           | Rodríguez         | 777777777 |                     14 |       40000.00 |           5 |
+|         11 | Elena          | Moreno            | Martínez          | 666666666 |                     15 |       45000.00 |           1 |
+|         12 | Francisco      | Álvarez           | Sánchez           | 555555555 |                      4 |       50000.00 |           2 |
+|         13 | Isabel         | Jiménez           | Gutiérrez         | 444444444 |                      3 |       55000.00 |           3 |
+|         14 | Daniel         | Ortega            | García            | 333333333 |                      2 |       60000.00 |           4 |
+|         15 | Lucía          | Flores            | Rodríguez         | 222222222 |                      1 |       65000.00 |           5 |
+|         16 | Manuel         | Romero            | Pérez             | 111111111 |                     10 |       70000.00 |           1 |
+|         17 | Rosa           | Santos            | Hernández         | 999999999 |                      9 |       75000.00 |           2 |
+|         18 | Javier         | Morales           | López             | 888888888 |                      8 |       80000.00 |           3 |
+|         19 | Silvia         | Iglesias          | Martínez          | 777777777 |                      7 |       85000.00 |           4 |
+|         20 | Alberto        | Cruz              | González          | 666666666 |                      6 |       90000.00 |           5 |
++------------+----------------+-------------------+-------------------+-----------+------------------------+----------------+-------------+
+20 rows in set (0.00 sec)
+ ```
+
+20. Devuelve un listado de los productos que nunca han aparecido en un
+pedido.
+
+```mysql
+SELECT *
+FROM producto pr
+WHERE NOT EXISTS (
+    SELECT *
+    FROM detalle_pedido dp
+    WHERE dp.id_producto = pr.id_producto
+);
+
+Empty set (0.00 sec)
+ ```
+
+21. Devuelve un listado de los productos que han aparecido en un pedido
+alguna vez.
+
+```mysql
+SELECT *
+FROM producto pr
+WHERE EXISTS (
+    SELECT *
+    FROM detalle_pedido dp
+    WHERE dp.id_producto = pr.id_producto
+);
+
++-------------+-----------+-----------------------------------------------------+------------------+--------------+----------------+--------------+---------+
+| id_producto | nombre    | descripcion
+               | precio_proveedor | precio_venta | id_dimensiones | id_proveedor | id_gama |
++-------------+-----------+-----------------------------------------------------+------------------+--------------+----------------+--------------+---------+
+|           1 | Lavadora  | Lavadora de carga frontal con capacidad de 8 kg.    |        400.00000 |    599.99000 |              1 |            1 |       1 |
+|           2 | Sofá      | Sofá de tres plazas con tapizado de tela.           |        300.00000 |    499.99000 |              2 |            2 |       2 |
+|           3 | Televisor | Televisor LED de 55 pulgadas con resolución 4K.     |        600.00000 |    899.99000 |              3 |            3 |       3 |
+|           4 | Muñeca    | Muñeca de porcelana con vestido de fiesta.          |         20.00000 |     39.99000 |              4 |            4 |       4 |
+|           5 | Camiseta  | Camiseta de algodón con estampado de rayas.         |         10.00000 |     24.99000 |           NULL |         NULL |       5 |
+|           6 | Florero   | Florero de cerámica decorado con motivos florales.  |         15.00000 |     29.99000 |              6 |         NULL |       6 |
++-------------+-----------+-----------------------------------------------------+------------------+--------------+----------------+--------------+---------+
+6 rows in set (0.00 sec)
+ ```
+
+Subconsultas correlacionadas
+
+Consultas variadas
+
+1. Devuelve el listado de clientes indicando el nombre del cliente y cuántos pedidos ha realizado. Tenga en cuenta que pueden existir clientes que no han realizado ningún pedido.
+
+```mysql
+SELECT c.nombre_cliente, COUNT(p.id_pedido) AS pedidos_realizados
+FROM cliente c
+LEFT JOIN pedido p ON c.id_cliente = p.id_cliente
+GROUP BY c.nombre_cliente;
+
++----------------+--------------------+
+| nombre_cliente | pedidos_realizados |
++----------------+--------------------+
+| Juan           |                  1 |
+| María          |                  1 |
+| José           |                  1 |
+| Ana            |                  1 |
+| Carlos         |                  1 |
+| Laura          |                  1 |
+| Pedro          |                  1 |
+| Sara           |                  1 |
+| Miguel         |                  1 |
+| Carmen         |                  1 |
+| Elena          |                  1 |
+| Francisco      |                  1 |
+| Isabel         |                  1 |
+| Daniel         |                  1 |
+| Lucía          |                  1 |
+| Manuel         |                  1 |
+| Rosa           |                  1 |
+| Javier         |                  1 |
+| Silvia         |                  1 |
+| Alberto        |                  1 |
++----------------+--------------------+
+20 rows in set (0.00 sec)
+ ```
+
+2. Devuelve un listado con los nombres de los clientes y el total pagado por cada uno de ellos. Tenga en cuenta que pueden existir clientes que no han realizado ningún pago.
+
+```mysql
+SELECT c.nombre_cliente, COALESCE(SUM(pa.total), 0) AS total_pagado
+FROM cliente c
+LEFT JOIN pago pa ON c.id_cliente = pa.id_cliente
+GROUP BY c.nombre_cliente;
+
++----------------+--------------+
+| nombre_cliente | total_pagado |
++----------------+--------------+
+| Juan           |          600 |
+| María          |          500 |
+| José           |          900 |
+| Ana            |           40 |
+| Carlos         |           25 |
+| Laura          |           30 |
+| Pedro          |          600 |
+| Sara           |          500 |
+| Miguel         |          900 |
+| Carmen         |           40 |
+| Elena          |           25 |
+| Francisco      |           30 |
+| Isabel         |          600 |
+| Daniel         |          500 |
+| Lucía          |          900 |
+| Manuel         |           40 |
+| Rosa           |           25 |
+| Javier         |           30 |
+| Silvia         |          600 |
+| Alberto        |          500 |
++----------------+--------------+
+20 rows in set (0.00 sec)
+ ```
+
+3. Devuelve el nombre de los clientes que hayan hecho pedidos en 2008 ordenados alfabéticamente de menor a mayor.
+
+```mysql
+SELECT DISTINCT c.nombre_cliente
+FROM cliente c
+JOIN pedido p ON c.id_cliente = p.id_cliente
+WHERE YEAR(p.fecha_pedido) = 2008
+ORDER BY c.nombre_cliente ASC;
+
+Empty set (0.00 sec)
+ ```
+
+4. Devuelve el nombre del cliente, el nombre y primer apellido de su representante de ventas y el número de teléfono de la oficina del representante de ventas, de aquellos clientes que no hayan realizado ningún pago.
+
+```mysql
+SELECT c.nombre_cliente, e.nombre AS nombre_empleado, e.apellido1 AS apellido_empleado, o.telefono
+FROM cliente c
+JOIN empleado e ON c.id_empleado_rep_ventas = e.id_empleado
+JOIN oficina o ON e.id_oficina = o.id_oficina
+LEFT JOIN pago p ON c.id_cliente = p.id_cliente
+WHERE p.id_cliente IS NULL;
+
+Empty set (0.00 sec)
+ ```
+
+5. Devuelve el listado de clientes donde aparezca el nombre del cliente, el nombre y primer apellido de su representante de ventas y la ciudad donde está su oficina.
+
+```mysql
+SELECT c.nombre_cliente, e.nombre AS nombre_empleado, e.apellido1 AS apellido_empleado, ciu.nombre AS ciudad_oficina
+FROM cliente c
+JOIN empleado e ON c.id_empleado_rep_ventas = e.id_empleado
+JOIN oficina AS o ON o.id_oficina = e.id_oficina
+JOIN oficina_direccion AS od ON od.id_oficina = o.id_oficina
+JOIN direccion AS d ON d.id_direccion = od.id_direccion
+JOIN ciudad AS ciu ON ciu.id_ciudad = d.id_ciudad;
+
++----------------+-----------------+-------------------+----------------+
+| nombre_cliente | nombre_empleado | apellido_empleado | ciudad_oficina |
++----------------+-----------------+-------------------+----------------+
+| Lucía          | John            | Doe               | Madrid         |
+| Daniel         | Jane            | Smith             | Madrid         |
+| Isabel         | Michael         | Johnson           | Madrid         |
+| Francisco      | Emily           | Brown             | Barcelona      |
+| María          | Emma            | Garcia            | Barcelona      |
+| Alberto        | Emma            | Garcia            | Barcelona      |
+| José           | William         | Lopez             | Barcelona      |
+| Silvia         | William         | Lopez             | Barcelona      |
+| Ana            | Olivia          | Rodriguez         | Barcelona      |
+| Javier         | Olivia          | Rodriguez         | Barcelona      |
+| Carlos         | Noah            | Hernandez         | París          |
+| Rosa           | Noah            | Hernandez         | París          |
+| Laura          | Ava             | Gonzalez          | París          |
+| Manuel         | Ava             | Gonzalez          | París          |
+| Juan           | James           | Perez             | París          |
+| Pedro          | James           | Perez             | París          |
+| Sara           | Isabella        | Torres            | Milán          |
+| Miguel         | Alexander       | Rivera            | Milán          |
+| Carmen         | Sophia          | Flores            | Milán          |
+| Elena          | Mia             | Sanchez           | Múnich         |
++----------------+-----------------+-------------------+----------------+
+20 rows in set (0.00 sec)
+ ```
+
+6. Devuelve el nombre, apellidos, puesto y teléfono de la oficina de aquellos empleados que no sean representante de ventas de ningún cliente.
+
+```mysql
+SELECT e.nombre, e.apellido1, e.puesto, o.telefono
+FROM empleado e
+JOIN oficina o ON e.id_oficina = o.id_oficina
+WHERE e.id_empleado NOT IN (SELECT id_empleado_rep_ventas FROM cliente);
+
++--------+-----------+-------------------------+-----------+
+| nombre | apellido1 | puesto                  | telefono  |
++--------+-----------+-------------------------+-----------+
+| David  | Martinez  | Representante de Ventas | 987654321 |
++--------+-----------+-------------------------+-----------+
+1 row in set (0.00 sec)
+ ```
+
+7. Devuelve un listado indicando todas las ciudades donde hay oficinas y el número de empleados que tiene.
+
+```mysql
+SELECT  ciu.nombre AS ciudad_oficina, COUNT(e.id_empleado) AS num_empleados
+FROM empleado e
+JOIN oficina AS o ON o.id_oficina = e.id_oficina
+JOIN oficina_direccion AS od ON od.id_oficina = o.id_oficina
+JOIN direccion AS d ON d.id_direccion = od.id_direccion
+JOIN ciudad AS ciu ON ciu.id_ciudad = d.id_ciudad
+GROUP BY ciu.nombre;
+
++----------------+---------------+
+| ciudad_oficina | num_empleados |
++----------------+---------------+
+| Madrid         |             3 |
+| Barcelona      |             5 |
+| París          |             3 |
+| Milán          |             3 |
+| Múnich         |             1 |
++----------------+---------------+
+5 rows in set (0.00 sec)
+ ```
