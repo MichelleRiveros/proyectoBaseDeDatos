@@ -2555,16 +2555,258 @@ GROUP BY ciu.nombre;
 
 -- PROCEDIMIENTOS 
 
-1. d
-2. d
-3. f
-4. d
-5. s
-6. s
-7. a
-8. d
-9. f
-10. d
+1. Crear cliente:
 
+```mysql
+DELIMITER //
+CREATE PROCEDURE sp_crear_cliente(
+    IN nombre_cliente VARCHAR(50),
+    IN apellido1_cliente VARCHAR(50),
+    IN apellido2_cliente VARCHAR(50),
+    IN telefono VARCHAR(20),
+    IN id_empleado_rep_ventas INT,
+    IN limite_credito DECIMAL(15,2),
+    IN id_contacto INT
+)
+BEGIN
+    INSERT INTO cliente (nombre_cliente, apellido1_cliente, apellido2_cliente, telefono, id_empleado_rep_ventas, limite_credito, id_contacto)
+    VALUES (nombre_cliente, apellido1_cliente, apellido2_cliente, telefono, id_empleado_rep_ventas, limite_credito, id_contacto);
+END //
+DELIMITER ;
+ ```
+
+2. Actualizar cliente:
+
+```mysql
+DELIMITER //
+CREATE PROCEDURE sp_actualizar_cliente(
+    IN id_cliente INT,
+    IN nombre_cliente VARCHAR(50),
+    IN apellido1_cliente VARCHAR(50),
+    IN apellido2_cliente VARCHAR(50),
+    IN telefono VARCHAR(20),
+    IN id_empleado_rep_ventas INT,
+    IN limite_credito DECIMAL(15,2),
+    IN id_contacto INT
+)
+BEGIN
+    UPDATE cliente
+    SET nombre_cliente = nombre_cliente, apellido1_cliente = apellido1_cliente, apellido2_cliente = apellido2_cliente,
+        telefono = telefono, id_empleado_rep_ventas = id_empleado_rep_ventas, limite_credito = limite_credito, id_contacto = id_contacto
+    WHERE id_cliente = id_cliente;
+END //
+DELIMITER ;
+ ```
+
+3. Eliminar cliente:
+
+```mysql
+DELIMITER //
+CREATE PROCEDURE sp_eliminar_cliente(
+    IN id_cliente INT
+)
+BEGIN
+    DELETE FROM cliente WHERE id_cliente = id_cliente;
+END //
+DELIMITER ;
+ ```
+
+4. Buscar cliente por ID:
+
+```mysql
+DELIMITER //
+CREATE PROCEDURE sp_buscar_cliente_por_id(
+    IN id_cliente INT
+)
+BEGIN
+    SELECT *
+    FROM cliente
+    WHERE id_cliente = id_cliente;
+END //
+DELIMITER ;
+ ```
+
+5. Crear pedido:
+
+```mysql
+DELIMITER //
+CREATE PROCEDURE sp_crear_pedido(
+    IN fecha_pedido DATE,
+    IN fecha_esperada DATE,
+    IN fecha_entrega DATE,
+    IN comentarios TEXT,
+    IN id_estado INT,
+    IN id_cliente INT
+)
+BEGIN
+    INSERT INTO pedido (fecha_pedido, fecha_esperada, fecha_entrega, comentarios, id_estado, id_cliente)
+    VALUES (fecha_pedido, fecha_esperada, fecha_entrega, comentarios, id_estado, id_cliente);
+END //
+DELIMITER ;
+ ```
+
+6. Actualizar estado de pedido:
+
+```mysql
+DELIMITER //
+CREATE PROCEDURE sp_actualizar_estado_pedido(
+    IN id_pedido INT,
+    IN id_estado INT
+)
+BEGIN
+    UPDATE pedido
+    SET id_estado = id_estado
+    WHERE id_pedido = id_pedido;
+END //
+DELIMITER ;
+ ```
+
+7. Eliminar pedido:
+
+```mysql
+DELIMITER //
+CREATE PROCEDURE sp_eliminar_pedido(
+    IN id_pedido INT
+)
+BEGIN
+    DELETE FROM pedido WHERE id_pedido = id_pedido;
+END //
+DELIMITER ;
+ ```
+
+8. Buscar pedido por ID:
+
+```mysql
+DELIMITER //
+CREATE PROCEDURE sp_buscar_pedido_por_id(
+    IN id_pedido INT
+)
+BEGIN
+    SELECT *
+    FROM pedido
+    WHERE id_pedido = id_pedido;
+END //
+DELIMITER ;
+ ```
+
+9. Crear pago:
+
+```mysql
+DELIMITER //
+CREATE PROCEDURE sp_crear_pago(
+    IN id_cliente INT,
+    IN forma_pago VARCHAR(40),
+    IN fecha_pago DATE,
+    IN total DECIMAL(15)
+)
+BEGIN
+    INSERT INTO pago (id_cliente, forma_pago, fecha_pago, total)
+    VALUES (id_cliente, forma_pago, fecha_pago, total);
+END //
+DELIMITER ;
+ ```
+
+10. Eliminar pago:
+    
+```mysql
+DELIMITER //
+CREATE PROCEDURE sp_eliminar_pago(
+    IN id_transaccion INT
+)
+BEGIN
+    DELETE FROM pago WHERE id_transaccion = id_transaccion;
+END //
+DELIMITER ;
+ ```
 
 -- VISTAS
+
+1. Mostrar informacion basica de los clientes
+
+```mysql
+CREATE VIEW vista_clientes AS
+SELECT id_cliente, nombre_cliente, telefono
+FROM cliente;
+ ```
+
+2. Pagos realizados con tarjeta de crédito
+
+```mysql
+CREATE VIEW vista_pagos_tarjeta AS
+SELECT id_transaccion, id_cliente, fecha_pago, total
+FROM pago
+WHERE forma_pago = 'tarjeta';
+ ```
+
+3. Productos con precios de venta superiores a 100
+
+```mysql
+CREATE VIEW vista_productos_caros AS
+SELECT id_producto, nombre, precio_venta
+FROM producto
+WHERE precio_venta > 100;
+ ```
+
+4. Ciudades y sus respectivas regiones y países
+
+```mysql
+CREATE VIEW vista_ciudades_regiones_paises AS
+SELECT c.nombre AS ciudad, r.nombre AS region, p.nombre AS pais
+FROM ciudad c
+JOIN region r ON c.id_region = r.id_region
+JOIN pais p ON r.id_pais = p.id_pais;
+ ```
+
+5. Clientes que han realizado pedidos
+
+```mysql
+CREATE VIEW vista_clientes_pedidos AS
+SELECT c.id_cliente, c.nombre_cliente, COUNT(p.id_pedido) AS num_pedidos
+FROM cliente c
+LEFT JOIN pedido p ON c.id_cliente = p.id_cliente
+GROUP BY c.id_cliente;
+ ```
+
+6. Productos en stock
+
+```mysql
+CREATE VIEW vista_productos_stock AS
+SELECT id_producto, nombre, cantidad_en_stock
+FROM inventario;
+ ```
+
+7. Empleados y sus oficinas
+
+```mysql
+CREATE VIEW vista_empleados_oficinas AS
+SELECT e.id_empleado, e.nombre, e.apellido1, e.apellido2, e.puesto, e.email, o.nombre AS nombre_oficina
+FROM empleado e
+JOIN oficina o ON e.id_oficina = o.id_oficina;
+ ```
+
+8. Pedidos entregados
+
+```mysql
+CREATE VIEW vista_pedidos_entregados AS
+SELECT id_pedido, fecha_pedido, fecha_entrega, comentarios
+FROM pedido
+WHERE id_estado = 3;
+ ```
+
+9. Pagos realizados con efectivo
+
+```mysql
+CREATE VIEW vista_pagos_efectivo AS
+SELECT id_transaccion, id_cliente, fecha_pago, total
+FROM pago
+WHERE forma_pago = 'efectivo';
+ ```
+
+10. Clientes y sus representantes de ventas
+    
+```mysql
+CREATE VIEW vista_clientes_rep_ventas AS
+SELECT c.id_cliente, c.nombre_cliente, c.apellido1_cliente, c.apellido2_cliente, e.nombre AS nombre_rep_ventas
+FROM cliente c
+LEFT JOIN empleado e ON c.id_empleado_rep_ventas = e.id_empleado;
+ ```
