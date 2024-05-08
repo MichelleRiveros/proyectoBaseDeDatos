@@ -2551,3 +2551,20 @@ GROUP BY ciu.nombre;
 +----------------+---------------+
 5 rows in set (0.00 sec)
  ```
+
+
+-- PROCEDIMIENTOS 
+
+1. d
+2. d
+3. f
+4. d
+5. s
+6. s
+7. a
+8. d
+9. f
+10. d
+
+
+-- VISTAS
