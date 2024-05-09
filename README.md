@@ -2,7 +2,9 @@
 
 1. Archivo sql con la estructura de la base de datos:
 
-![image](1.png)}
+![image](bd1.PNG)
+![image](bd12.PNG)
+![image](bd13.PNG)
 
 2. DDL / Creacion de la base de datos:
 
