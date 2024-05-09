@@ -313,10 +313,11 @@ ORDER BY total DESC;
 tabla pago. Tenga en cuenta que no deben aparecer formas de pago
 repetidas.
 
+```mysql
+
 SELECT DISTINCT forma_pago
 FROM pago;
 
-```mysql
 +------------------------+
 | forma_pago             |
 +------------------------+
