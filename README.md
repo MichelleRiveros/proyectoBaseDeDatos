@@ -102,19 +102,26 @@ WHERE puesto = "CEO";
 empleados que no sean representantes de ventas.
 
 ```mysql
-SELECT nombre, apellido1, apellido2, email
-FROM empleado
-WHERE puesto = "Representante de Ventas";
+SELECT e.puesto, e.nombre, e.apellido1, e.apellido2, e.email
+FROM empleado as e
+WHERE e.puesto !=  'Representante de ventas';
 
-+---------+-----------+-----------+------------------------------+
-| nombre  | apellido1 | apellido2 | email                        
-+---------+-----------+-----------+------------------------------+
-| David   | Martinez  |           | david.martinez@example.com   |
-| Emma    | Garcia    |           | emma.garcia@example.com      |
-| William | Lopez     |           | william.lopez@example.com    |
-| Olivia  | Rodriguez |           | olivia.rodriguez@example.com |
-+---------+-----------+-----------+------------------------------+
-4 rows in set (0.00 sec)
++-----------------------------+-----------+-----------+-----------+------------------------------+
+| puesto                      | nombre    | apellido1 | apellido2 | email                        |
++-----------------------------+-----------+-----------+-----------+------------------------------+
+| CEO                         | John      | Doe       |           | john.doe@example.com         |
+| CFO                         | Jane      | Smith     |           | jane.smith@example.com       |
+| COO                         | Michael   | Johnson   |           | michael.johnson@example.com  |
+| Gerente de Ventas           | Emily     | Brown     |           | emily.brown@example.com      |
+| Gerente de Marketing        | Noah      | Hernandez |           | noah.hernandez@example.com   |
+| Analista de Marketing       | Ava       | Gonzalez  |           | ava.gonzalez@example.com     |
+| Analista de Marketing       | James     | Perez     |           | james.perez@example.com      |
+| Gerente de Logística        | Isabella  | Torres    |           | isabella.torres@example.com  |
+| Supervisor de Almacén       | Alexander | Rivera    |           | alexander.rivera@example.com |
+| Supervisor de Almacén       | Sophia    | Flores    |           | sophia.flores@example.com    |
+| Gerente de Recursos Humanos | Mia       | Sanchez   |           | mia.sanchez@example.com      |
++-----------------------------+-----------+-----------+-----------+------------------------------+
+11 rows in set (0.00 sec)
   ```
 
 6. Devuelve un listado con el nombre de los todos los clientes españoles.
