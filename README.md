@@ -214,22 +214,19 @@ esperada y fecha de entrega de los pedidos que no han sido entregados a
 tiempo.
 
 ```mysql
-SELECT p.id_pedido, p.id_cliente, p.fecha_esperada, p.fecha_entrega
-FROM pedido as p
-JOIN estado_pedido as e ON e.id_estado = p.id_estado 
-WHERE e.estado = "no entregado a tiempo";
-
+SELECT e.id_pedido, e.id_cliente, e.fecha_esperada, e.fecha_entrega
+FROM pedido as e
+WHERE e.fecha_entrega < e.fecha_esperada;
 +-----------+------------+----------------+---------------+
 | id_pedido | id_cliente | fecha_esperada | fecha_entrega |
 +-----------+------------+----------------+---------------+
-|        20 |         20 | 2024-05-10     | 2024-05-10    |
+|         2 |          2 | 2024-05-10     | 2024-01-10    |
 +-----------+------------+----------------+---------------+
 1 row in set (0.00 sec)
   ```
 
 10. Devuelve un listado con el código de pedido, código de cliente, fecha
-esperada y fecha de entrega de los pedidos cuya fecha de entrega ha sido al
-menos dos días antes de la fecha esperada.
+esperada y fecha de entrega de los pedidos cuya fecha de entrega ha sido al menos dos días antes de la fecha esperada.
 
 - ADDDATE
 ```mysql
@@ -237,7 +234,12 @@ SELECT id_pedido, id_cliente, fecha_esperada, fecha_entrega
 FROM pedido
 WHERE fecha_entrega <= ADDDATE(fecha_esperada, -2);
 
-Empty set (0.00 sec)
++-----------+------------+----------------+---------------+
+| id_pedido | id_cliente | fecha_esperada | fecha_entrega |
++-----------+------------+----------------+---------------+
+|         2 |          2 | 2024-05-10     | 2024-01-10    |
++-----------+------------+----------------+---------------+
+1 row in set (0.00 sec)
   ```
 
 - DATEDIFF
@@ -246,7 +248,12 @@ SELECT id_pedido, id_cliente, fecha_esperada, fecha_entrega
 FROM pedido
 WHERE DATEDIFF(fecha_esperada, fecha_entrega) >= 2;
 
-Empty set (0.00 sec)
++-----------+------------+----------------+---------------+
+| id_pedido | id_cliente | fecha_esperada | fecha_entrega |
++-----------+------------+----------------+---------------+
+|         2 |          2 | 2024-05-10     | 2024-01-10    |
++-----------+------------+----------------+---------------+
+1 row in set (0.00 sec)
   ```
 
 - ¿Sería posible resolver esta consulta utilizando el operador de suma + o
@@ -257,27 +264,22 @@ SELECT id_pedido, id_cliente, fecha_esperada, fecha_entrega
 FROM pedido
 WHERE fecha_entrega <= fecha_esperada - INTERVAL 2 DAY;
 
-Empty set (0.00 sec)
++-----------+------------+----------------+---------------+
+| id_pedido | id_cliente | fecha_esperada | fecha_entrega |
++-----------+------------+----------------+---------------+
+|         2 |          2 | 2024-05-10     | 2024-01-10    |
++-----------+------------+----------------+---------------+
+1 row in set (0.00 sec)
   ```
 
 11. Devuelve un listado de todos los pedidos que fueron rechazados en 2009.
 
 ```mysql
-SELECT p.id_pedido
-FROM pedido as p
-JOIN estado_pedido as e ON e.id_estado = p.id_estado 
-WHERE e.estado = "Cancelado";
+SELECT p.* FROM pedido as p
+RIGHT JOIN estado_pedido as e ON e.id_estado = p.id_estado
+WHERE YEAR(p.fecha_pedido) = 2009 AND e.estado = 'Cancelado';
 
-+-----------+
-| id_pedido |
-+-----------+
-|         1 |
-|         4 |
-|         5 |
-|         8 |
-|        10 |
-+-----------+
-5 rows in set (0.00 sec)
+Empty set (0.00 sec)
   ```
 
 12. Devuelve un listado de todos los pedidos que han sido entregados en el
@@ -304,16 +306,14 @@ año 2008 mediante Paypal. Ordene el resultado de mayor a menor.
 ```mysql
 SELECT id_transaccion
 FROM pago
-WHERE forma_pago = 'Paypal' AND YEAR(fecha_pago) = 2008
-ORDER BY total DESC;
-
+WHERE forma_pago = 'Paypal' AND YEAR(fecha_pago) = 2008 ORDER BY total ASC;
 +----------------+
 | id_transaccion |
 +----------------+
-|              7 |
 |             11 |
+|              7 |
 +----------------+
-2 rows in set (0.02 sec)
+2 rows in set (0.00 sec)
   ```
 
 14. Devuelve un listado con todas las formas de pago que aparecen en la
